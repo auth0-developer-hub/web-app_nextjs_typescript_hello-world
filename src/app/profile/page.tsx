@@ -1,11 +1,17 @@
+"use client";
+
 import { NextPage } from "next";
 import React from "react";
 import { CodeSnippet } from "@/components/code-snippet";
 import Image from "next/image";
-import { getUserProfileData } from "@/services/profile.service";
+import { useUser } from "@auth0/nextjs-auth0/client";
 
-const Profile: NextPage = async () => {
-  const user = await getUserProfileData();
+const Profile: NextPage = () => {
+  const { user } = useUser();
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="content-layout">
@@ -15,18 +21,24 @@ const Profile: NextPage = async () => {
       <div className="content__body">
         <p id="page-description">
           <span>
-            <strong>Only authenticated users should access this page.</strong>
+            You can use the <strong>ID Token</strong> to get the profile
+            information of an authenticated user.
+          </span>
+          <span>
+            <strong>Only authenticated users can access this page.</strong>
           </span>
         </p>
         <div className="profile-grid">
           <div className="profile__header">
-            <Image
-              src={user.picture}
-              alt="Profile"
-              className="profile__avatar"
-              width={80}
-              height={80}
-            />
+            {user.picture && (
+              <Image
+                src={user.picture}
+                alt="Profile"
+                className="profile__avatar"
+                width={80}
+                height={80}
+              />
+            )}
             <div className="profile__headline">
               <h2 className="profile__title">{user.name}</h2>
               <span className="profile__description">{user.email}</span>
@@ -34,7 +46,7 @@ const Profile: NextPage = async () => {
           </div>
           <div className="profile__details">
             <CodeSnippet
-              title="User Profile Object"
+              title="Decoded ID Token"
               code={JSON.stringify(user, null, 2)}
             />
           </div>
