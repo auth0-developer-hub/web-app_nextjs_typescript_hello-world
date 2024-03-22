@@ -1,33 +1,45 @@
 import "server-only";
 
 import { Message } from "@/models/message";
+import { getAccessToken } from "@auth0/nextjs-auth0";
 
 interface GetMessageParams {
-  type: "public" | "protected" | "admin";
+  type: "protected" | "admin";
 }
 
 export const getMessage = async ({
   type,
 }: GetMessageParams): Promise<Message> => {
-  switch (type) {
-    case "public": {
-      return {
-        text: "This is a public message.",
-      };
-    }
-    case "protected": {
-      return { text: "This is a protected message." };
-    }
-    case "admin": {
-      return {
-        text: "This is an admin message.",
-      };
-    }
+  const { accessToken } = await getAccessToken();
+
+  if (!accessToken) {
+    throw new Error(`Requires authorization`);
   }
+
+  const res = await fetch(
+    `${process.env.API_SERVER_URL}/api/messages/${type}`,
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  );
+
+  if (!res.ok) {
+    const json = await res.json();
+
+    return {
+      text: json.message || res.statusText || "Unable to fetch message.",
+    };
+  }
+
+  return res.json();
 };
 
 export const getPublicMessage = async () => {
-  return getMessage({ type: "public" });
+  return {
+    text: "This is a public message.",
+  };
 };
 
 export const getProtectedMessage = async () => {
